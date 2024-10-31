@@ -2272,12 +2272,27 @@ CSimpleIniTempl<SI_CHAR,SI_STRLESS,SI_CONVERTER>::SetDoubleValue(
     if (!a_pSection || !a_pKey) return SI_FAIL;
 
     // convert to an ASCII string
-    char szInput[64];
+    char szInput[64] = { '\0' };
 #if __STDC_WANT_SECURE_LIB__ && !_WIN32_WCE
-    sprintf_s(szInput, "%f", a_nValue);
+    sprintf_s(szInput, "%.*f", DBL_DECIMAL_DIG, a_nValue);
 #else // !__STDC_WANT_SECURE_LIB__
-    sprintf(szInput, "%f", a_nValue);
+    sprintf(szInput, "%.*f", DBL_DECIMAL_DIG, a_nValue);
 #endif // __STDC_WANT_SECURE_LIB__
+
+    // strip trailing zeroes
+    for (int i = 62; i > 0; i--)
+    {
+        if (szInput[i] != '\0' && szInput[i] != '0')
+        {
+            // Add zero after decimal sign
+            if (i < 62 && (szInput[i] < '0' || szInput[i] > '9'))
+            {
+                szInput[i + 1] = '0';
+            }
+            break;
+        }
+        szInput[i] = '\0';
+    }
 
     // convert to output text
     SI_CHAR szOutput[64];
